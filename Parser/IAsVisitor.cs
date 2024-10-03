@@ -14,9 +14,11 @@ namespace Gwent__.Parser
 		T VisitParamList(ParamListNode node);
 		T VisitParamDefinition(ParamDefinitionNode node);
 		T VisitActionNode(ActionDefinitionNode node);
+		T VisitFunctionDefinition(FunctionDefinitionNode node);
 		//STATEMENTS
 		
 		//EXPRESSIONS
 		T VisitNumberLiteral(NumberLiteralNode node);
+		
 	}
 }

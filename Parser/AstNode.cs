@@ -154,7 +154,11 @@ namespace Gwent__.Parser
 			ParamList = paramList;
 			StatementList = statementList;
 		}
-	}
+        public override T Accept<T>(IAstVisitor<T> visitor)
+        {
+            return visitor.VisitFunctionDefinition(this);
+        }
+    }
 	/*--------STATEMENTS----------------*/
 	
 	
