@@ -284,7 +284,12 @@ namespace Gwent__.Parser
 		{
 			Value = value;
 		}
-	}
+
+        public override T Accept<T>(IAstVisitor<T> visitor)
+        {
+            return visitor.VisitVariable(this);
+        }
+    }
 	
 	//FUNCTION CALL
 	public class FunctionCallNode : AstNode
