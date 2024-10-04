@@ -168,9 +168,9 @@ namespace Gwent__.Parser
 	/*--------STATEMENTS----------------*/
 	public class StatementListNode : AstNode
 	{
-		public StatementNode StatementNode { get; set; } 
+		public List<StatementNode> StatementNode { get; set; } 
 		
-		public StatementListNode(int line, int column, StatementNode statementNode) : base(line, column, NodeType.StatementList)
+		public StatementListNode(int line, int column, List<StatementNode> statementNode) : base(line, column, NodeType.StatementList)
 		{
 			StatementNode = statementNode;
 		}
@@ -276,16 +276,13 @@ namespace Gwent__.Parser
 		}
 	}
 	
-	public class VariableValue
+	public class VariableValue : AstNode
 	{
-		public string? StringValue { get; }
-		public int? IntValue { get; }
-		public float? FLoatValue { get; }
-		public VariableValue(int numberValue, string stringValue, float floatValue)
+		public object Value { get; set; }
+		public VariableValue(int line, int column, object value)
+		: base(line, column, NodeType.Variable)
 		{
-			IntValue = numberValue;
-			StringValue = stringValue;
-			FLoatValue = floatValue;
+			Value = value;
 		}
 	}
 	
@@ -340,17 +337,35 @@ namespace Gwent__.Parser
 		public string Operator { get; set; }
 		public ExpressionNode Right { get; set;}
 		
-		public BinaryExpressionNode(int line, int column, ExpressionNode left, string _operator, ExpressionNode right)
+		public BinaryExpressionNode(int line, int column, ExpressionNode left, string @operator, ExpressionNode right)
 		: base(line, column, NodeType.BinaryExpression)
 		{
 			Left = left;
-			Operator = _operator;
+			Operator = @operator;
 			Right = right;
 		}
 
-        public override T Accept<T>(IAstVisitor<T> visitor)
-        {
-            return visitor.VisitBinaryExpression(this);	
-        }
-    }
+		public override T Accept<T>(IAstVisitor<T> visitor)
+		{
+			return visitor.VisitBinaryExpression(this);	
+		}
+	}
+	
+	public class UnaryExpressionNode: AstNode
+	{
+		public ExpressionNode Operand { get; set;}
+		public string Operator { get; set; }
+		
+		public UnaryExpressionNode(int line, int column, ExpressionNode operand, string @operator)
+		: base(line, column, NodeType.UnaryExpression)
+		{
+			Operand = operand;
+			Operator = @operator;
+		}
+
+		public override T Accept<T>(IAstVisitor<T> visitor)
+		{
+			return visitor.VisitUnaryExpression(this);
+		}
+	}
 }

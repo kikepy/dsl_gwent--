@@ -30,5 +30,6 @@ namespace Gwent__.Parser
 		T VisitFunctionCall(FunctionCallNode node);
         T VisitArgument(ArgumentNode node);
         T VisitBinaryExpression(BinaryExpressionNode node);
+        T VisitUnaryExpression(UnaryExpressionNode unaryExpressionNode);
     }
 }
