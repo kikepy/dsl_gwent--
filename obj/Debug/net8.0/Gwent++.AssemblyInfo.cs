@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Gwent++")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d2038c5de48f95d2cc3aa658e9f2c06644d2c95c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8ecd000d0473801b96f11306983a5b489b2a30e4")]
 [assembly: System.Reflection.AssemblyProductAttribute("Gwent++")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Gwent++")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

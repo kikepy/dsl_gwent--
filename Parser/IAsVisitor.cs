@@ -15,10 +15,16 @@ namespace Gwent__.Parser
 		T VisitParamDefinition(ParamDefinitionNode node);
 		T VisitActionNode(ActionDefinitionNode node);
 		T VisitFunctionDefinition(FunctionDefinitionNode node);
-		//STATEMENTS
 		
+		//STATEMENTS
+		T VisitStatement(StatementListNode node);
+		T VisitWhileStatement(WhileStatementNode node);
+		T VisitForStatement(ForStatementNode node);
+        T VisitAssignment(AssignmentStatementNode node);
+		T VisitIfStatement(IfStatementNode ifStatementNode);
 		//EXPRESSIONS
 		T VisitNumberLiteral(NumberLiteralNode node);
-		
-	}
+		T VisitString(StringLiteralNode stringLiteralNode);
+        T VisitVariable(VariableNode variableNode);
+    }
 }
