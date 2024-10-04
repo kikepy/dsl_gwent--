@@ -27,7 +27,7 @@ namespace Gwent__.Parser
 		StringLiteral,
 		Variable,
 		UnaryExpression,
-		
+		Argument,
 		//FUNCTION CALLS
 		FunctionCall,
 		
@@ -58,7 +58,7 @@ namespace Gwent__.Parser
 	
 	public class EffectDefinitionNode : AstNode
 	{
-		public NameDefinitionNode Name { get; set; }
+		public NameDefinitionNode Name { get; protected set; }
 		public ParamsDefinitionNode Params { get; set; }
 		public ActionDefinitionNode Action { get; set; }
 		
@@ -288,4 +288,69 @@ namespace Gwent__.Parser
 			FLoatValue = floatValue;
 		}
 	}
+	
+	//FUNCTION CALL
+	public class FunctionCallNode : AstNode
+	{
+		public string Identifier { get; set; }
+		public List<ArgumentNode> Arguments { get; set;}
+		
+		public FunctionCallNode(int line, int column, string identifier, List<ArgumentNode> arguments) 
+		: base(line, column, NodeType.FunctionCall)
+		{
+			Identifier = identifier;
+			Arguments = arguments;
+		}
+
+		public override T Accept<T>(IAstVisitor<T> visitor)
+		{
+			return visitor.VisitFunctionCall(this);
+		}
+	}
+	
+	public class ArgumentNode : AstNode 
+	{
+		public ExpressionNode Expression { get; set;}
+		
+		public ArgumentNode(int line, int column, ExpressionNode expression)
+		: base(line, column, NodeType.Argument)
+		{
+			Expression = expression;
+		}
+
+		public override T Accept<T>(IAstVisitor<T> visitor)
+		{
+			return visitor.VisitArgument(this);
+		}
+	}
+	
+	public abstract class ExpressionNode : AstNode
+	{
+		public ExpressionNode(int line, int column, NodeType nodeType)
+		: base(line, column, nodeType)
+		{	
+		}
+
+		public abstract override T Accept<T>(IAstVisitor<T> visitor);
+	}
+	
+	public class BinaryExpressionNode : AstNode
+	{
+		public ExpressionNode Left { get; set;}
+		public string Operator { get; set; }
+		public ExpressionNode Right { get; set;}
+		
+		public BinaryExpressionNode(int line, int column, ExpressionNode left, string _operator, ExpressionNode right)
+		: base(line, column, NodeType.BinaryExpression)
+		{
+			Left = left;
+			Operator = _operator;
+			Right = right;
+		}
+
+        public override T Accept<T>(IAstVisitor<T> visitor)
+        {
+            return visitor.VisitBinaryExpression(this);	
+        }
+    }
 }

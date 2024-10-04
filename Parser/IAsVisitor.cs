@@ -20,11 +20,15 @@ namespace Gwent__.Parser
 		T VisitStatement(StatementListNode node);
 		T VisitWhileStatement(WhileStatementNode node);
 		T VisitForStatement(ForStatementNode node);
-        T VisitAssignment(AssignmentStatementNode node);
+		T VisitAssignment(AssignmentStatementNode node);
 		T VisitIfStatement(IfStatementNode ifStatementNode);
 		//EXPRESSIONS
 		T VisitNumberLiteral(NumberLiteralNode node);
-		T VisitString(StringLiteralNode stringLiteralNode);
-        T VisitVariable(VariableNode variableNode);
+		T VisitString(StringLiteralNode node);
+		T VisitVariable(VariableNode node);
+		//FUNCTION CALL	
+		T VisitFunctionCall(FunctionCallNode node);
+        T VisitArgument(ArgumentNode node);
+        T VisitBinaryExpression(BinaryExpressionNode node);
     }
 }
