@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Gwent__.Parser
 {
@@ -26,6 +22,7 @@ namespace Gwent__.Parser
 		T VisitNumberLiteral(NumberLiteralNode node);
 		T VisitString(StringLiteralNode node);
 		T VisitVariable(VariableNode node);
+		T VisitVariableValue(VariableValue node);
 		//FUNCTION CALL	
 		T VisitFunctionCall(FunctionCallNode node);
         T VisitArgument(ArgumentNode node);

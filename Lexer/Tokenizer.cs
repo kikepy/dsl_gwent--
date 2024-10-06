@@ -1,21 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Gwent__.Lexer
 {
     public class Tokenizer
 	{
-		private readonly KeywordsHashmap _keywordsHashmap;
-		private readonly Symbols _symbols;
-		
-		public Tokenizer()
-		{
-			_keywordsHashmap = new KeywordsHashmap();
-			_symbols = new Symbols();
-		}
-		
+		private readonly KeywordsHashmap _keywordsHashmap = new();
+		private readonly Symbols _symbols = new();
+
 		public List<Token> Tokenize(string input)
 		{	
 			if(input == null)
@@ -99,13 +89,13 @@ namespace Gwent__.Lexer
 		
 		private Token GetSymbol(string input, int startIndex, int lineNumber, int columnNumber)
 		{
-			int currentIndex = startIndex;
-			string symbol = string.Empty;
+			var currentIndex = startIndex;
+			string symbol;
 			
 			//CHECK FOR MULTI-CHARACTER SYMBOLS
 			if(currentIndex + 1 < input.Length)
 			{
-				string twoCharSymbol = input.Substring(startIndex, 2);
+				var twoCharSymbol = input.Substring(startIndex, 2);
 				if(_symbols.SymbolsMap.ContainsKey(twoCharSymbol))
 				{
 					symbol = twoCharSymbol;
@@ -120,19 +110,15 @@ namespace Gwent__.Lexer
 			}
 			else
 			{
-				//IF ONLY ONE CHARACTER LEFT, ITS A ONE-CHARACTER SYMBOL
+				//IF ONLY ONE CHARACTER LEFT, IT'S A ONE-CHARACTER SYMBOL
 				symbol = input[currentIndex].ToString();
 				currentIndex++;
 			}
-			
+
 			//CHECK IF THE SYMBOL IS VALID
-			if(_symbols.SymbolsMap.TryGetValue(symbol, out TokenType tokenType))
-			{
-				return new Token(tokenType, symbol, lineNumber, columnNumber);
-			}
-			return null;
+			return _symbols.SymbolsMap.TryGetValue(symbol, out TokenType tokenType) ? new Token(tokenType, symbol, lineNumber, columnNumber) : null!;
 		}
-		private Token GetKeyword(string input, int startIndex, int lineNumber, int columnNumber)
+		private Token? GetKeyword(string input, int startIndex, int lineNumber, int columnNumber)
 		{
 			int currentIndex = startIndex;
 			string keyword = string.Empty;
@@ -143,9 +129,8 @@ namespace Gwent__.Lexer
 				currentIndex++;
 			}
 
-			if (_keywordsHashmap.Keywords.ContainsKey(keyword))
+			if (_keywordsHashmap.Keywords.TryGetValue(keyword, out var tokenType))
 			{
-				TokenType tokenType = _keywordsHashmap.Keywords[keyword];
 				return new Token(tokenType, keyword, lineNumber, columnNumber);
 			}
 			return null;
@@ -154,7 +139,7 @@ namespace Gwent__.Lexer
 		private Token GetIdentifier(string input, int startIndex, int lineNumber, int columnNumber)
 		{
 			int currentIndex = startIndex;
-			string identifier = string.Empty;
+			var identifier = string.Empty;
 			
 			
 
@@ -178,13 +163,13 @@ namespace Gwent__.Lexer
 			int currentIndex = startIndex;
 			string literal = string.Empty;
 			
-			const int StartState = 0;
-			const int InStringState = 1;
-			const int EscapeSequenceState = 2;
-			const int TrueState = 3;
-			const int FalseState = 4;
+			const int startState = 0;
+			const int inStringState = 1;
+			const int escapeSequenceState = 2;
+			const int trueState = 3;
+			const int falseState = 4;
 			
-			int currentState = StartState;
+			var currentState = startState;
 			
 			while (currentIndex < input.Length)
 			{
@@ -192,10 +177,10 @@ namespace Gwent__.Lexer
 				
 				switch (currentState)
 				{
-					case StartState:
+					case startState:
 						if (currentChar == '"')
 						{
-							currentState = InStringState;
+							currentState = inStringState;
 							currentIndex++;
 						}
 						else if(char.IsDigit(currentChar))
@@ -204,13 +189,13 @@ namespace Gwent__.Lexer
 						}
 						else if(currentChar == 't')
 						{
-							currentState = TrueState;
+							currentState = trueState;
 							literal += currentChar;
 							currentIndex++;
 						}
 						else if(currentChar == 'f')
 						{
-							currentState = FalseState;
+							currentState = falseState;
 							literal += currentChar;
 							currentIndex++;
 						}
@@ -219,10 +204,10 @@ namespace Gwent__.Lexer
 							throw new TokenizerException($"Unexpected character '{currentChar}' at line {lineNumber}, column {columnNumber}", input, lineNumber, columnNumber);
 						}
 						break;
-					case InStringState:
+					case inStringState:
 						if(currentChar == '\\')
 						{
-							currentState = EscapeSequenceState;
+							currentState = escapeSequenceState;
 							currentIndex++;
 						}
 						else if(currentChar == '"')
@@ -236,7 +221,7 @@ namespace Gwent__.Lexer
 							currentIndex++;
 						}
 						break;
-					case EscapeSequenceState:
+					case escapeSequenceState:
 						switch (currentChar)
 						{
 							case 'n': literal += '\n'; break;
@@ -246,10 +231,10 @@ namespace Gwent__.Lexer
 							default:
 								throw new TokenizerException($"Invalid escape sequence: \\{currentChar} at line {lineNumber}, column {columnNumber}", input, lineNumber, columnNumber); 
 						}
-						currentState = InStringState;
+						currentState = inStringState;
 						currentIndex++;
 						break;
-					case TrueState:
+					case trueState:
 						if(currentIndex < input.Length && input[currentIndex] == "true"[literal.Length])
 						{
 							literal += input[currentIndex++];
@@ -260,11 +245,11 @@ namespace Gwent__.Lexer
 							{
 								return new Token(TokenType.BOOLEAN_TRUE, literal, lineNumber, columnNumber);
 							}
-							currentState = StartState;
+							currentState = startState;
 							literal = string.Empty;
 						}
 						break;
-					case FalseState:
+					case falseState:
 						if (currentIndex < input.Length && input[currentIndex] == "false"[literal.Length])
 						{
 							literal += input[currentIndex++]; 
@@ -275,14 +260,14 @@ namespace Gwent__.Lexer
 							{
 								return new Token(TokenType.BOOLEAN_FALSE, literal, lineNumber, columnNumber);
 							}
-							currentState = StartState;
+							currentState = startState;
 							literal = string.Empty;
 						}
 						break;
 				}
 			}
 			
-			if(currentState == InStringState || currentState == EscapeSequenceState)
+			if(currentState == inStringState || currentState == escapeSequenceState)
 			{
 				throw new TokenizerException($"Unterminated string at line {lineNumber}, column {columnNumber}", input, lineNumber, columnNumber);
 			}
@@ -318,19 +303,12 @@ namespace Gwent__.Lexer
 			return null;
 		}
 
-		public class TokenizerException : Exception
+		private class TokenizerException(string message, string input, int lineNumber, int columnNumber)
+			: Exception(message)
 		{
-			public TokenizerException(string message, string input, int lineNumber, int columnNumber) 
-			: base(message)
-			{
-				Input = input;
-				LineNumber = lineNumber;
-				ColumnNumber = columnNumber;
-			}
-				
-			public string Input { get; set;}
-			public int LineNumber { get; set;}
-			public int ColumnNumber { get; set;}
+			private string Input { get; set;} = input;
+			private int LineNumber { get; set;} = lineNumber;
+			private int ColumnNumber { get; set;} = columnNumber;
 
 			public override string ToString()
 			{

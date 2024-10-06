@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+
 
 namespace Gwent__.Lexer
 {
@@ -50,81 +47,68 @@ namespace Gwent__.Lexer
 		
 	}
 	//TOKEN
-	public sealed class Token
+	public sealed class Token(TokenType type, string value, int line, int column)
 	{
-		public TokenType Type { get; set; }
-		public string Value { get; set; }
-		public int Line { get; set; }
-		public int Column { get; set; }
-		//CONSTRUCTOR
-		public Token(TokenType type, string value, int line, int column)
-		{
-			Type = type;
-			Value = value;
-			Line = line;
-			Column = column;
-		}
+		public TokenType Type { get; set; } = type;
+		public string Value { get; set; } = value;
+		public int Line { get; set; } = line;
+
+		public int Column { get; set; } = column;
+
+		
 	}
 	//MAP FOR KEYWORDS
 	public sealed class KeywordsHashmap
 	{
-		public Dictionary<string, TokenType> Keywords { get; set; }
-		public KeywordsHashmap()
+		public Dictionary<string, TokenType> Keywords { get; } = new()
 		{
-			Keywords = new Dictionary<string, TokenType>
-			{
-				{"effect" , TokenType.KEYWORDS},
-				{"card" , TokenType.KEYWORDS},
-				{"Name" , TokenType.KEYWORDS},
-				{"while" , TokenType.KEYWORDS},
-				{"if" , TokenType.KEYWORDS},
-				{"for" , TokenType.KEYWORDS},
-				{"Action" , TokenType.KEYWORDS},
-				{"in" , TokenType.KEYWORDS},
-				{"Params" , TokenType.KEYWORDS},
-				{"" , TokenType.KEYWORDS},
+			{"effect" , TokenType.KEYWORDS},
+			{"card" , TokenType.KEYWORDS},
+			{"Name" , TokenType.KEYWORDS},
+			{"while" , TokenType.KEYWORDS},
+			{"if" , TokenType.KEYWORDS},
+			{"for" , TokenType.KEYWORDS},
+			{"Action" , TokenType.KEYWORDS},
+			{"in" , TokenType.KEYWORDS},
+			{"Params" , TokenType.KEYWORDS},
+			{"" , TokenType.KEYWORDS},
 				
-			};
-		}
+		};
 	}
 	//MAP FOR EACH SYMBOL
 	public sealed class Symbols
 	{
-		public Dictionary<string, TokenType> SymbolsMap { get; set; }
-		public Symbols()
+		public Dictionary<string, TokenType> SymbolsMap { get; } = new()
 		{
-			SymbolsMap = new Dictionary<string, TokenType>
-			{
-				{ "+", TokenType.PLUS },
-				{ "-", TokenType.MINUS },
-				{ "*", TokenType.MULTIPLY },
-				{ "/", TokenType.DIVIDE },
-				{ "(", TokenType.LEFT_PAREN },
-				{ ")", TokenType.RIGHT_PAREN },
-				{ "=", TokenType.ASSIGNMENT },
-				{ "<", TokenType.LESS_THAN },
-				{ ">", TokenType.GREATER_THAN },
-				{ ",", TokenType.COMMA },
-				{ ":", TokenType.COLON },
-				{ ";", TokenType.SEMICOLON },
-				{ "[", TokenType.LBRACKET },
-				{ "]", TokenType.RBRACKET },
-				{ "{", TokenType.LBRACE },
-				{ "}", TokenType.RBRACE },
-				{ "@", TokenType.CONCAT },
-				//MULTI-CHARACTER SYMBOL
-				{ "++", TokenType.PLUS_ONE },
-				{ "--", TokenType.MINUS_ONE },
-				{ "&&", TokenType.AND },
-				{ "||", TokenType.OR },
-				{ "==", TokenType.EQUALS },
-				{ "!=", TokenType.NOT_EQUALS },
-				{ "<=", TokenType.LESS_THAN_OR_EQUAL },
-				{ ">=", TokenType.GREATER_THAN_OR_EQUAL },
-				{ "=>", TokenType.LAMBDA },
-				{ "@@", TokenType.CONCAT },
+			{ "+", TokenType.PLUS },
+			{ "-", TokenType.MINUS },
+			{ "*", TokenType.MULTIPLY },
+			{ "/", TokenType.DIVIDE },
+			{ "(", TokenType.LEFT_PAREN },
+			{ ")", TokenType.RIGHT_PAREN },
+			{ "=", TokenType.ASSIGNMENT },
+			{ "<", TokenType.LESS_THAN },
+			{ ">", TokenType.GREATER_THAN },
+			{ ",", TokenType.COMMA },
+			{ ":", TokenType.COLON },
+			{ ";", TokenType.SEMICOLON },
+			{ "[", TokenType.LBRACKET },
+			{ "]", TokenType.RBRACKET },
+			{ "{", TokenType.LBRACE },
+			{ "}", TokenType.RBRACE },
+			{ "@", TokenType.CONCAT },
+			//MULTI-CHARACTER SYMBOL
+			{ "++", TokenType.PLUS_ONE },
+			{ "--", TokenType.MINUS_ONE },
+			{ "&&", TokenType.AND },
+			{ "||", TokenType.OR },
+			{ "==", TokenType.EQUALS },
+			{ "!=", TokenType.NOT_EQUALS },
+			{ "<=", TokenType.LESS_THAN_OR_EQUAL },
+			{ ">=", TokenType.GREATER_THAN_OR_EQUAL },
+			{ "=>", TokenType.LAMBDA },
+			{ "@@", TokenType.CONCAT },
 				
-			};
-		}
+		};
 	}
 }

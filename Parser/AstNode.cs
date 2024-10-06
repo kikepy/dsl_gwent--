@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata.Ecma335;
-using System.Threading.Tasks;
-using Gwent__.Lexer;
 
 namespace Gwent__.Parser
 {
@@ -40,34 +34,26 @@ namespace Gwent__.Parser
 		ForStatement,
 		IfStatement,
 	}
-	public abstract class AstNode
+	public abstract class AstNode(int lineNumber, int columnNumber, NodeType nodeType)
 	{
-		public NodeType Type { get; set; }
-		public int Line { get; set; }
-		public int Column { get; set; }
-		
-		protected AstNode(int lineNumber, int columnNumber, NodeType nodeType)
-		{
-			Line = lineNumber;
-			Column = columnNumber;
-			Type = nodeType;
-		}
-		
+		public NodeType Type { get; set; } = nodeType;
+		public int Line { get; set; } = lineNumber;
+		public int Column { get; set; } = columnNumber;
+
 		public abstract T Accept<T>(IAstVisitor<T> visitor);
 	}
 	
-	public class EffectDefinitionNode : AstNode
+	public class EffectDefinitionNode(
+		int line,
+		int column,
+		NameDefinitionNode name,
+		ParamsDefinitionNode @params,
+		ActionDefinitionNode action)
+		: AstNode(line, column, NodeType.EffectDefinition)
 	{
-		public NameDefinitionNode Name { get; protected set; }
-		public ParamsDefinitionNode Params { get; set; }
-		public ActionDefinitionNode Action { get; set; }
-		
-		public EffectDefinitionNode(int line, int column, NameDefinitionNode name, ParamsDefinitionNode _params, ActionDefinitionNode action) : base(line, column, NodeType.EffectDefinition)
-		{
-			Name = name;
-			Params = _params;
-			Action = action;
-		}
+		public NameDefinitionNode Name { get; protected set; } = name;
+		public ParamsDefinitionNode Params { get; set; } = @params;
+		public ActionDefinitionNode Action { get; set; } = action;
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
@@ -75,14 +61,9 @@ namespace Gwent__.Parser
 		}
 	}
 	
-	public class NameDefinitionNode : AstNode
+	public class NameDefinitionNode(int line, int column, string value) : AstNode(line, column, NodeType.NameDefinition)
 	{
-		public string Value { get; set; }
-		
-		public NameDefinitionNode(int line, int column, string value) : base (line, column, NodeType.NameDefinition)
-		{
-			Value = value;
-		}
+		public string Value { get; set; } = value;
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
@@ -90,14 +71,10 @@ namespace Gwent__.Parser
 		}
 	}
 	
-	public class ParamsDefinitionNode : AstNode
+	public class ParamsDefinitionNode(int line, int column, ParamListNode paramList)
+		: AstNode(line, column, NodeType.ParamsDefinition)
 	{
-		public ParamListNode ParamList { get; set; }
-		
-		public ParamsDefinitionNode(int line, int column, ParamListNode paramList) : base(line, column, NodeType.ParamsDefinition)
-		{
-			ParamList = paramList;
-		}
+		public ParamListNode ParamList { get; set; } = paramList;
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
@@ -105,11 +82,9 @@ namespace Gwent__.Parser
 		}
 	}
 	
-	public class ParamListNode : AstNode
+	public class ParamListNode(int line, int column) : AstNode(line, column, NodeType.ParamList)
 	{
 		public List<ParamDefinitionNode>? Params { get; set; }
-		
-		public ParamListNode(int line, int column) : base(line, column, NodeType.ParamList){ }
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
@@ -117,16 +92,11 @@ namespace Gwent__.Parser
 		}
 	}
 	
-	public class ParamDefinitionNode : AstNode
+	public class ParamDefinitionNode(int line, int column, string identifier, string type)
+		: AstNode(line, column, NodeType.ParamDefinition)
 	{
-		public string Identifier { get; set; }
-		public new string Type { get; set; }
-		
-		public ParamDefinitionNode(int line, int column, string identifier, string type) : base(line, column, NodeType.ParamDefinition)
-		{
-			Identifier = identifier;
-			Type = type;
-		}
+		public string Identifier { get; set; } = identifier;
+		public new string Type { get; set; } = type;
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
@@ -134,14 +104,10 @@ namespace Gwent__.Parser
 		}
 	}
 	
-	public class ActionDefinitionNode : AstNode
+	public class ActionDefinitionNode(int line, int column, FunctionDefinitionNode functionDefinition)
+		: AstNode(line, column, NodeType.ActionDefinition)
 	{
-		public FunctionDefinitionNode FunctionDefinition { get; set; }
-
-		public ActionDefinitionNode(int line, int column, FunctionDefinitionNode functionDefinition) : base(line, column, NodeType.ActionDefinition)
-		{
-			FunctionDefinition = functionDefinition;
-		}
+		public FunctionDefinitionNode FunctionDefinition { get; set; } = functionDefinition;
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
@@ -149,16 +115,12 @@ namespace Gwent__.Parser
 		}
 	}
 	
-	public class FunctionDefinitionNode : AstNode
+	public class FunctionDefinitionNode(int line, int column, ParamListNode paramList, StatementListNode statementList)
+		: AstNode(line, column, NodeType.FunctionDefinition)
 	{
-		public ParamListNode ParamList { get; set; }
-		public StatementListNode StatementList { get; set; }
-		
-		public FunctionDefinitionNode(int line, int column, ParamListNode paramList, StatementListNode statementList) : base(line, column, NodeType.FunctionDefinition)
-		{
-			ParamList = paramList;
-			StatementList = statementList;
-		}
+		public ParamListNode ParamList { get; set; } = paramList;
+		public StatementListNode StatementList { get; set; } = statementList;
+
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitFunctionDefinition(this);
@@ -166,68 +128,54 @@ namespace Gwent__.Parser
 	}
 	
 	/*--------STATEMENTS----------------*/
-	public class StatementListNode : AstNode
+	public class StatementListNode(int line, int column, List<StatementNode> statementNode)
+		: AstNode(line, column, NodeType.StatementList)
 	{
-		public List<StatementNode> StatementNode { get; set; } 
-		
-		public StatementListNode(int line, int column, List<StatementNode> statementNode) : base(line, column, NodeType.StatementList)
-		{
-			StatementNode = statementNode;
-		}
+		public List<StatementNode> StatementNode { get; set; } = statementNode;
+
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitStatement(this);
 		}
 	}
 	
-	public abstract class StatementNode : AstNode
+	public abstract class StatementNode(int line, int column, StatementType type)
+		: AstNode(line, column, NodeType.Statement)
 	{
-		public new StatementType Type { get; set; }
-		public new int Line { get; set; }
-		public new int Column { get; set; }
-		public StatementNode(int line, int column, StatementType type) : base(line, column, NodeType.Statement)
-		{
-			Line = line;
-			Column = column;
-			Type = type;
-		}
+		public new StatementType Type { get; set; } = type;
+		public new int Line { get; set; } = line;
+		public new int Column { get; set; } = column;
+
 		public abstract override T Accept<T>(IAstVisitor<T> visitor);
 	}
 	
-	public class WhileStatementNode : StatementNode
+	public class WhileStatementNode(int line, int column) : StatementNode(line, column, StatementType.WhileStatement)
 	{
-		public WhileStatementNode(int line, int column) : base(line, column, StatementType.WhileStatement){ }
-
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitWhileStatement(this);
 		}
 	}
 	
-	public class ForStatementNode : StatementNode
+	public class ForStatementNode(int line, int column) : StatementNode(line, column, StatementType.ForStatement)
 	{
-		public ForStatementNode(int line, int column) : base(line, column, StatementType.ForStatement){ }
-
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitForStatement(this);
 		}
 	}
 	
-	public class IfStatementNode : StatementNode
+	public class IfStatementNode(int line, int column) : StatementNode(line, column, StatementType.IfStatement)
 	{
-		public IfStatementNode(int line, int column) : base(line, column, StatementType.IfStatement){ }
-
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitIfStatement(this);
 		}
 	}
 	
-	public class AssignmentStatementNode : StatementNode
+	public class AssignmentStatementNode(int line, int column)
+		: StatementNode(line, column, StatementType.AssignmentStatement)
 	{
-		public AssignmentStatementNode(int line, int column) : base(line, column, StatementType.AssignmentStatement){ }
-
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitAssignment(this);
@@ -235,13 +183,9 @@ namespace Gwent__.Parser
 	}
 	
 	/*--------EXPRESSIONS---------------*/
-	public class NumberLiteralNode : AstNode
+	public class NumberLiteralNode(int line, int column, int value) : AstNode(line, column, NodeType.NumberLiteral)
 	{
-		public int Value { get; set;}
-		public NumberLiteralNode(int line, int column, int value) : base(line, column, NodeType.NumberLiteral)
-		{
-			Value = value;
-		}
+		public int Value { get; set;} = value;
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
@@ -249,60 +193,42 @@ namespace Gwent__.Parser
 		}
 	}
 	
-	public class StringLiteralNode : AstNode
+	public class StringLiteralNode(int line, int column, string value) : AstNode(line, column, NodeType.StringLiteral)
 	{
-		public string? Value { get; set;}
-		
-		public StringLiteralNode(int line, int column, string value) : base(line, column, NodeType.StringLiteral)
-		{
-			Value = value;
-		}
+		public string? Value { get; set;} = value;
+
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitString(this);
 		}
 	}
 	
-	public class VariableNode : AstNode
+	public class VariableNode(int line, int column, VariableValue value) : AstNode(line, column, NodeType.Variable)
 	{
-		public VariableValue Value { get; set; }
-		public VariableNode(int line, int column, VariableValue value) : base(line, column, NodeType.Variable) 
-		{
-			Value = value;
-		}
+		public VariableValue Value { get; set; } = value;
+
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitVariable(this);
 		}
 	}
 	
-	public class VariableValue : AstNode
+	public class VariableValue(int line, int column, object value) : AstNode(line, column, NodeType.Variable)
 	{
-		public object Value { get; set; }
-		public VariableValue(int line, int column, object value)
-		: base(line, column, NodeType.Variable)
-		{
-			Value = value;
-		}
+		public object Value { get; set; } = value;
 
-        public override T Accept<T>(IAstVisitor<T> visitor)
+		public override T Accept<T>(IAstVisitor<T> visitor)
         {
-            return visitor.VisitVariable(this);
+            return visitor.VisitVariableValue(this);
         }
     }
 	
 	//FUNCTION CALL
-	public class FunctionCallNode : AstNode
+	public class FunctionCallNode(int line, int column, string identifier, List<ArgumentNode> arguments)
+		: AstNode(line, column, NodeType.FunctionCall)
 	{
-		public string Identifier { get; set; }
-		public List<ArgumentNode> Arguments { get; set;}
-		
-		public FunctionCallNode(int line, int column, string identifier, List<ArgumentNode> arguments) 
-		: base(line, column, NodeType.FunctionCall)
-		{
-			Identifier = identifier;
-			Arguments = arguments;
-		}
+		public string Identifier { get; set; } = identifier;
+		public List<ArgumentNode> Arguments { get; set;} = arguments;
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
@@ -310,15 +236,10 @@ namespace Gwent__.Parser
 		}
 	}
 	
-	public class ArgumentNode : AstNode 
+	public class ArgumentNode(int line, int column, ExpressionNode expression)
+		: AstNode(line, column, NodeType.Argument)
 	{
-		public ExpressionNode Expression { get; set;}
-		
-		public ArgumentNode(int line, int column, ExpressionNode expression)
-		: base(line, column, NodeType.Argument)
-		{
-			Expression = expression;
-		}
+		public ExpressionNode Expression { get; set;} = expression;
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
@@ -328,7 +249,7 @@ namespace Gwent__.Parser
 	
 	public abstract class ExpressionNode : AstNode
 	{
-		public ExpressionNode(int line, int column, NodeType nodeType)
+		protected ExpressionNode(int line, int column, NodeType nodeType)
 		: base(line, column, nodeType)
 		{	
 		}
@@ -336,19 +257,12 @@ namespace Gwent__.Parser
 		public abstract override T Accept<T>(IAstVisitor<T> visitor);
 	}
 	
-	public class BinaryExpressionNode : AstNode
+	public class BinaryExpressionNode(int line, int column, ExpressionNode left, string @operator, ExpressionNode right)
+		: AstNode(line, column, NodeType.BinaryExpression)
 	{
-		public ExpressionNode Left { get; set;}
-		public string Operator { get; set; }
-		public ExpressionNode Right { get; set;}
-		
-		public BinaryExpressionNode(int line, int column, ExpressionNode left, string @operator, ExpressionNode right)
-		: base(line, column, NodeType.BinaryExpression)
-		{
-			Left = left;
-			Operator = @operator;
-			Right = right;
-		}
+		public ExpressionNode Left { get; set;} = left;
+		public string Operator { get; set; } = @operator;
+		public ExpressionNode Right { get; set;} = right;
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
@@ -356,17 +270,11 @@ namespace Gwent__.Parser
 		}
 	}
 	
-	public class UnaryExpressionNode: AstNode
+	public class UnaryExpressionNode(int line, int column, ExpressionNode operand, string @operator)
+		: AstNode(line, column, NodeType.UnaryExpression)
 	{
-		public ExpressionNode Operand { get; set;}
-		public string Operator { get; set; }
-		
-		public UnaryExpressionNode(int line, int column, ExpressionNode operand, string @operator)
-		: base(line, column, NodeType.UnaryExpression)
-		{
-			Operand = operand;
-			Operator = @operator;
-		}
+		public ExpressionNode Operand { get; set;} = operand;
+		public string Operator { get; set; } = @operator;
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
