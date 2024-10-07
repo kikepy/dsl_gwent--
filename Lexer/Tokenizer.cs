@@ -1,7 +1,7 @@
 
 namespace Gwent__.Lexer
 {
-    public class Tokenizer
+	public class Tokenizer
 	{
 		private readonly KeywordsHashmap _keywordsHashmap = new();
 		private readonly Symbols _symbols = new();
@@ -20,258 +20,159 @@ namespace Gwent__.Lexer
 			int columnNumber = 1;
 			
 			while(currentIndex < input.Length)
-			{
-				//SKIP WHITESPACE
-				if (char.IsWhiteSpace(input[currentIndex]))
+			{	
+				while(currentIndex < input.Length && char.IsWhiteSpace(input[currentIndex]))
 				{
+					if (input[currentIndex] == '\n' || input[currentIndex] == '\r')
+					{
+						lineNumber++;
+						columnNumber = 1;
+					}
+					else
+					{
+						columnNumber++;
+					}
 					currentIndex++;
-					columnNumber++;
-					continue;
-				}
-				
-				if (input[currentIndex] == '\n' || input[currentIndex] == '\r')
-				{
-					lineNumber++;
-					columnNumber = 1;
-					currentIndex++;
-					continue;
 				}
 				
 				var token = GetToken(input, currentIndex, lineNumber, columnNumber);
-				if(token != null)
-				{
-					tokens.Add(token);
-					currentIndex += token.Value.Length;
-					columnNumber += token.Value.Length;
-				}
-				else
-				{
-					throw new TokenizerException($"Unexpected character at line {lineNumber}, column {columnNumber}", input, lineNumber, columnNumber);
-				}
+				if (tokens != null) tokens.Add(token);
+				currentIndex += token.Value.Length;
+				columnNumber += token.Value.Length;
 			}
-			
-			//ADD EOF TOKEN
-			tokens.Add(new Token(TokenType.EOF, "", 0, 0));
 			
 			return tokens;
 		}
 		
 		private Token GetToken(string input, int startIndex, int lineNumber, int columnNumber)
 		{
-			//CHECK FOR ONE-CHARACTER OR MULTI-CHARACTER SYMBOL
-			var symbol = GetSymbol(input, startIndex, lineNumber, columnNumber);
-			if(symbol != null)
+			if(startIndex >= input.Length)
 			{
-				return symbol;
+				//HANDLE THE END OF THE INPUT FILE
+				return new Token(TokenType.EOF, "",lineNumber, columnNumber);
 			}
-			//CHECK FOR KEYWORDS
-			var keyword = GetKeyword(input, startIndex, lineNumber, columnNumber);
-			if(keyword != null)
+			
+			if(char.IsLetter(input[startIndex]))
 			{
-				return keyword;
+				return GetKeywordOrIdentifier(input, startIndex, lineNumber, columnNumber);
 			}
-			//CHECK FOR IDENTIFIERS
-			var identifier = GetIdentifier(input, startIndex, lineNumber, columnNumber);
-			if (identifier != null)
+			else if(char.IsDigit(input[startIndex]))
 			{
-				return identifier;
+				return GetNumberLiteral(input, startIndex, lineNumber, columnNumber);
 			}
-
-			//CHECK FOR LITERALS
-			var literal = GetLiteral(input, startIndex, lineNumber, columnNumber);
-			if (literal != null)
+			else if(input[startIndex] == '"')
 			{
-				return literal;
+				return GetStringLiteral(input, startIndex, lineNumber, columnNumber);
 			}
-
-			throw new TokenizerException($"Unexpected character at line: {lineNumber}, column: {columnNumber}", input, lineNumber, columnNumber);
+			else if(input[startIndex] == '/' && startIndex + 1 < input.Length && input[startIndex + 1] == '/')
+			{
+				//HANDLE WITH COMMENTS
+				while(startIndex < input.Length && input[startIndex] != '\n')
+				{
+					startIndex++;
+				}
+				return GetToken(input, startIndex, lineNumber, columnNumber);
+			}
+			else
+			{
+				return GetSymbol(input, startIndex, lineNumber, columnNumber);
+			}
 		}
 		
 		private Token GetSymbol(string input, int startIndex, int lineNumber, int columnNumber)
 		{
-			var currentIndex = startIndex;
-			string symbol;
+			string symbol = input[startIndex].ToString();
 			
-			//CHECK FOR MULTI-CHARACTER SYMBOLS
-			if(currentIndex + 1 < input.Length)
+			if(startIndex + 1 < input.Length)
 			{
-				var twoCharSymbol = input.Substring(startIndex, 2);
-				if(_symbols.SymbolsMap.ContainsKey(twoCharSymbol))
+				string symbolMulti = symbol + input[startIndex + 1];
+				
+				if(_symbols.SymbolSet.Contains(symbolMulti))
 				{
-					symbol = twoCharSymbol;
-					currentIndex += 2;
+					return new Token(_symbols.SymbolsMap[symbolMulti], symbolMulti, lineNumber, columnNumber);
 				}
-				else
-				{
-					//CHECK FOR ONE-CHARACTER SYMBOLS
-					symbol = input[currentIndex].ToString();
-					currentIndex++;
-				}
+			}
+			
+			if(_symbols.SymbolSet.Contains(symbol))
+			{
+				return new Token(_symbols.SymbolsMap[symbol], symbol, lineNumber, columnNumber);
 			}
 			else
 			{
-				//IF ONLY ONE CHARACTER LEFT, IT'S A ONE-CHARACTER SYMBOL
-				symbol = input[currentIndex].ToString();
-				currentIndex++;
+				return new Token(TokenType.ERROR, symbol, lineNumber, columnNumber);
 			}
-
-			//CHECK IF THE SYMBOL IS VALID
-			return _symbols.SymbolsMap.TryGetValue(symbol, out TokenType tokenType) ? new Token(tokenType, symbol, lineNumber, columnNumber) : null!;
 		}
-		private Token? GetKeyword(string input, int startIndex, int lineNumber, int columnNumber)
+		private Token GetKeywordOrIdentifier(string input, int startIndex, int lineNumber, int columnNumber)
 		{
 			int currentIndex = startIndex;
-			string keyword = string.Empty;
+			string keywordOrIdentifier = string.Empty;
 
 			while (currentIndex < input.Length && char.IsLetter(input[currentIndex]))
 			{
-				keyword += input[currentIndex];
+				keywordOrIdentifier += input[currentIndex];
 				currentIndex++;
 			}
 
-			if (_keywordsHashmap.Keywords.TryGetValue(keyword, out var tokenType))
+			if (_keywordsHashmap.Keywords.Contains(keywordOrIdentifier))
 			{
-				return new Token(tokenType, keyword, lineNumber, columnNumber);
+				return new Token(TokenType.KEYWORDS, keywordOrIdentifier, lineNumber, columnNumber);
 			}
-			return null;
-		}
-
-		private Token GetIdentifier(string input, int startIndex, int lineNumber, int columnNumber)
-		{
-			int currentIndex = startIndex;
-			var identifier = string.Empty;
-			
-			
-
-			if (currentIndex < input.Length && (char.IsLetter(input[currentIndex]) || input[currentIndex] == '_'))
+			else
 			{
-				identifier += input[currentIndex];
-				currentIndex++;
-				
-				while (currentIndex < input.Length && (char.IsLetterOrDigit(input[currentIndex]) || input[currentIndex] == '_'))
-				{
-					identifier += input[currentIndex];
-					currentIndex++;
-				}
-				return new Token(TokenType.IDENTIFIERS, identifier, lineNumber, columnNumber);
+				return new Token(TokenType.IDENTIFIERS, keywordOrIdentifier, lineNumber, columnNumber);
 			}
-			return null;
+			
 		}
-
-		private Token GetLiteral(string input, int startIndex, int lineNumber, int columnNumber)
+		private Token GetStringLiteral(string input, int startIndex, int lineNumber, int columnNumber)
 		{
-			int currentIndex = startIndex;
+			int currentIndex = startIndex + 1;
 			string literal = string.Empty;
 			
-			const int startState = 0;
-			const int inStringState = 1;
-			const int escapeSequenceState = 2;
-			const int trueState = 3;
-			const int falseState = 4;
-			
-			var currentState = startState;
-			
-			while (currentIndex < input.Length)
+			while(currentIndex < input.Length && input[currentIndex] != '"')
 			{
-				char currentChar = input[currentIndex];
-				
-				switch (currentState)
+				if(input[currentIndex] == '\\')
 				{
-					case startState:
-						if (currentChar == '"')
+					currentIndex++;
+					
+					if(currentIndex < input.Length)
+					{
+						switch (input[currentIndex])
 						{
-							currentState = inStringState;
-							currentIndex++;
-						}
-						else if(char.IsDigit(currentChar))
-						{
-							return GetNumberLiteral(input, currentIndex, lineNumber, columnNumber);
-						}
-						else if(currentChar == 't')
-						{
-							currentState = trueState;
-							literal += currentChar;
-							currentIndex++;
-						}
-						else if(currentChar == 'f')
-						{
-							currentState = falseState;
-							literal += currentChar;
-							currentIndex++;
-						}
-						else
-						{
-							throw new TokenizerException($"Unexpected character '{currentChar}' at line {lineNumber}, column {columnNumber}", input, lineNumber, columnNumber);
-						}
-						break;
-					case inStringState:
-						if(currentChar == '\\')
-						{
-							currentState = escapeSequenceState;
-							currentIndex++;
-						}
-						else if(currentChar == '"')
-						{
-							currentIndex++;
-							return new Token(TokenType.STRING, literal, lineNumber, columnNumber);
-						}	
-						else
-						{
-							literal += currentChar;
-							currentIndex++;
-						}
-						break;
-					case escapeSequenceState:
-						switch (currentChar)
-						{
-							case 'n': literal += '\n'; break;
-							case 't': literal += '\t'; break;
-							case '\\': literal += '\\'; break;
-							case '"': literal += '"'; break; 
+							case 'n':
+								literal += '\n';
+								break;
+							case 't':
+								literal += '\t';
+								break;
+							case '\\':
+								literal += '\\';
+								break;
+							case '"':
+								literal += '"';
+								break;
 							default:
-								throw new TokenizerException($"Invalid escape sequence: \\{currentChar} at line {lineNumber}, column {columnNumber}", input, lineNumber, columnNumber); 
+								throw new TokenizerException($"Space character is not valid: \\ {input[currentIndex]}", input, lineNumber, columnNumber);
 						}
-						currentState = inStringState;
-						currentIndex++;
-						break;
-					case trueState:
-						if(currentIndex < input.Length && input[currentIndex] == "true"[literal.Length])
-						{
-							literal += input[currentIndex++];
-						}
-						else
-						{
-							if(literal == "true")
-							{
-								return new Token(TokenType.BOOLEAN_TRUE, literal, lineNumber, columnNumber);
-							}
-							currentState = startState;
-							literal = string.Empty;
-						}
-						break;
-					case falseState:
-						if (currentIndex < input.Length && input[currentIndex] == "false"[literal.Length])
-						{
-							literal += input[currentIndex++]; 
-						}
-						else
-						{
-							if (literal == "false")
-							{
-								return new Token(TokenType.BOOLEAN_FALSE, literal, lineNumber, columnNumber);
-							}
-							currentState = startState;
-							literal = string.Empty;
-						}
-						break;
+					}
+					else
+					{
+						throw new TokenizerException($"Unexpected end of string literal", input, lineNumber, columnNumber);
+					}
 				}
+				else
+				{
+					literal += input[currentIndex];
+				}
+				
+				currentIndex++;
 			}
 			
-			if(currentState == inStringState || currentState == escapeSequenceState)
+			if(currentIndex >= input.Length)
 			{
-				throw new TokenizerException($"Unterminated string at line {lineNumber}, column {columnNumber}", input, lineNumber, columnNumber);
+				throw new TokenizerException("String is never closed", input, lineNumber, columnNumber);
 			}
-			return null;
+			
+			return new Token(TokenType.STRING, literal, lineNumber, columnNumber);
 		}
 		private Token GetNumberLiteral(string input, int startIndex, int lineNumber, int columnNumber)
 		{
@@ -294,13 +195,13 @@ namespace Gwent__.Lexer
 					literal += input[currentIndex];
 					currentIndex++;
 				}
+				
 				return new Token(TokenType.FLOAT, literal, lineNumber, columnNumber);
 			}
-			else if (literal.Length > 0)
+			else
 			{
 				return new Token(TokenType.INTEGER, literal, lineNumber, columnNumber);
 			}
-			return null;
 		}
 
 		private class TokenizerException(string message, string input, int lineNumber, int columnNumber)

@@ -43,8 +43,8 @@ namespace Gwent__.Lexer
 		RBRACE,
 		//OTHER
 		EOF,
-		WHITESPACE
-		
+		WHITESPACE,
+		ERROR
 	}
 	//TOKEN
 	public sealed class Token(TokenType type, string value, int line, int column)
@@ -60,24 +60,54 @@ namespace Gwent__.Lexer
 	//MAP FOR KEYWORDS
 	public sealed class KeywordsHashmap
 	{
-		public Dictionary<string, TokenType> Keywords { get; } = new()
+		public HashSet<string> Keywords { get; } = new()
 		{
-			{"effect" , TokenType.KEYWORDS},
-			{"card" , TokenType.KEYWORDS},
-			{"Name" , TokenType.KEYWORDS},
-			{"while" , TokenType.KEYWORDS},
-			{"if" , TokenType.KEYWORDS},
-			{"for" , TokenType.KEYWORDS},
-			{"Action" , TokenType.KEYWORDS},
-			{"in" , TokenType.KEYWORDS},
-			{"Params" , TokenType.KEYWORDS},
-			{"" , TokenType.KEYWORDS},
-				
+			"effect",
+			"card",
+			"Name",
+			"while",
+			"if",
+			"for",
+			"Action",
+			"in",
+			"Params",
 		};
 	}
 	//MAP FOR EACH SYMBOL
 	public sealed class Symbols
 	{
+		public HashSet<string> SymbolSet { get; } = new()
+		{
+			"+",
+			"-",
+			"*",
+			"/",
+			"(",
+			")",
+			"=",
+			"<",
+			">",
+			",",
+			":",
+			";",
+			"[",
+			"]",
+			"{",
+			"}",
+			"@",
+			//MULTI-CHARACTER SYMBOLS
+			"++",
+			"--",
+			"&&",
+			"||",
+			"==",
+			"!=",
+			"<=",
+			">=",
+			"=>",
+			"@@",
+		};
+		
 		public Dictionary<string, TokenType> SymbolsMap { get; } = new()
 		{
 			{ "+", TokenType.PLUS },

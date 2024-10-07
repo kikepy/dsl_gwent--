@@ -13,7 +13,7 @@ namespace Gwent__.Parser
 		T VisitFunctionDefinition(FunctionDefinitionNode node);
 		
 		//STATEMENTS
-		T VisitStatement(StatementListNode node);
+		T VisitBlockStatement(BlockStatementNode node);
 		T VisitWhileStatement(WhileStatementNode node);
 		T VisitForStatement(ForStatementNode node);
 		T VisitAssignment(AssignmentStatementNode node);
@@ -21,8 +21,7 @@ namespace Gwent__.Parser
 		//EXPRESSIONS
 		T VisitNumberLiteral(NumberLiteralNode node);
 		T VisitString(StringLiteralNode node);
-		T VisitVariable(VariableNode node);
-		T VisitVariableValue(VariableValue node);
+		T VisitVariableDeclaration(VariableDeclarationNode node);
 		//FUNCTION CALL	
 		T VisitFunctionCall(FunctionCallNode node);
         T VisitArgument(ArgumentNode node);

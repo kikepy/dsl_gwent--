@@ -19,12 +19,12 @@ namespace Gwent__.Parser
 		BinaryExpression,
 		NumberLiteral,
 		StringLiteral,
-		Variable,
+		VariableDeclaration,
 		UnaryExpression,
 		Argument,
 		//FUNCTION CALLS
 		FunctionCall,
-		
+		Expression,
 	}
 	
 	public enum StatementType
@@ -34,201 +34,398 @@ namespace Gwent__.Parser
 		ForStatement,
 		IfStatement,
 	}
-	public abstract class AstNode(int lineNumber, int columnNumber, NodeType nodeType)
+	public abstract class AstNode
 	{
-		public NodeType Type { get; set; } = nodeType;
-		public int Line { get; set; } = lineNumber;
-		public int Column { get; set; } = columnNumber;
+		protected AstNode(int line, int column, NodeType nodeType)
+		{
+			Type = nodeType;
+			Line = line;
+			Column = column;
+		}
+
+		public NodeType Type { get; set; }
+		public int Line { get; set; }
+		public int Column { get; set; }
 
 		public abstract T Accept<T>(IAstVisitor<T> visitor);
+		
+		public virtual IEnumerable<AstNode> GetChildren()
+		{
+			return [];
+		}
 	}
 	
-	public class EffectDefinitionNode(
-		int line,
-		int column,
-		NameDefinitionNode name,
-		ParamsDefinitionNode @params,
-		ActionDefinitionNode action)
-		: AstNode(line, column, NodeType.EffectDefinition)
+	public class EffectDefinitionNode : AstNode
 	{
-		public NameDefinitionNode Name { get; protected set; } = name;
-		public ParamsDefinitionNode Params { get; set; } = @params;
-		public ActionDefinitionNode Action { get; set; } = action;
+		public EffectDefinitionNode(int line,
+			int column,
+			NameDefinitionNode name,
+			ParamsDefinitionNode @params,
+			ActionDefinitionNode action) : base(line, column, NodeType.EffectDefinition)
+		{
+			Name = name;
+			Params = @params;
+			Action = action;
+		}
+
+		private NameDefinitionNode Name { get; set; }
+		private ParamsDefinitionNode Params { get; set; }
+		private ActionDefinitionNode Action { get; set; }
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitEffectDefinition(this);
 		}
+
+		public override IEnumerable<AstNode> GetChildren()
+		{
+			return [Name, Params, Action];
+		}
 	}
 	
-	public class NameDefinitionNode(int line, int column, string value) : AstNode(line, column, NodeType.NameDefinition)
+	public class NameDefinitionNode : AstNode
 	{
-		public string Value { get; set; } = value;
+		public NameDefinitionNode(int line, int column, string value) : base(line, column, NodeType.NameDefinition)
+		{
+			Value = value;
+		}
+
+		public string Value { get; set; }
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitNameDefinition(this);
 		}
+		public override IEnumerable<AstNode> GetChildren()
+		{
+			return [];
+		}
 	}
 	
-	public class ParamsDefinitionNode(int line, int column, ParamListNode paramList)
-		: AstNode(line, column, NodeType.ParamsDefinition)
+	public class ParamsDefinitionNode : AstNode
 	{
-		public ParamListNode ParamList { get; set; } = paramList;
+		public ParamsDefinitionNode(int line, int column, ParamListNode paramList) : base(line, column, NodeType.ParamsDefinition)
+		{
+			ParamList = paramList;
+		}
+
+		private ParamListNode ParamList { get; set; }
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitParamsDefinition(this);
 		}
+
+		public override IEnumerable<AstNode> GetChildren()
+		{
+			return [ParamList];
+		}
 	}
 	
-	public class ParamListNode(int line, int column) : AstNode(line, column, NodeType.ParamList)
+	public class ParamListNode : AstNode
 	{
+		public ParamListNode(int line, int column) : base(line, column, NodeType.ParamList)
+		{
+		}
+
 		public List<ParamDefinitionNode>? Params { get; set; }
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitParamList(this);
 		}
+
+		public override IEnumerable<AstNode> GetChildren()
+		{
+			return Params;
+		}
 	}
 	
-	public class ParamDefinitionNode(int line, int column, string identifier, string type)
-		: AstNode(line, column, NodeType.ParamDefinition)
+	public class ParamDefinitionNode : AstNode
 	{
-		public string Identifier { get; set; } = identifier;
-		public new string Type { get; set; } = type;
+		public ParamDefinitionNode(int line, int column, string identifier, string type) 
+			: base(line, column, NodeType.ParamDefinition)
+		{
+			Identifier = identifier;
+			Type = type;
+		}
+
+		public string Identifier { get; set; }
+		public new string Type { get; set; }
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitParamDefinition(this);
 		}
+
+		public override IEnumerable<AstNode> GetChildren()
+		{
+			return [];
+		}
 	}
 	
-	public class ActionDefinitionNode(int line, int column, FunctionDefinitionNode functionDefinition)
-		: AstNode(line, column, NodeType.ActionDefinition)
+	public class ActionDefinitionNode : AstNode
 	{
-		public FunctionDefinitionNode FunctionDefinition { get; set; } = functionDefinition;
+		public ActionDefinitionNode(int line, int column, FunctionDefinitionNode functionDefinition) : base(line, column, NodeType.ActionDefinition)
+		{
+			FunctionDefinition = functionDefinition;
+		}
+
+		private FunctionDefinitionNode FunctionDefinition { get; set; }
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitActionNode(this);
 		}
+
+		public override IEnumerable<AstNode> GetChildren()
+		{
+			return [FunctionDefinition];
+		}
 	}
 	
-	public class FunctionDefinitionNode(int line, int column, ParamListNode paramList, StatementListNode statementList)
-		: AstNode(line, column, NodeType.FunctionDefinition)
+	public class FunctionDefinitionNode : AstNode
 	{
-		public ParamListNode ParamList { get; set; } = paramList;
-		public StatementListNode StatementList { get; set; } = statementList;
+		public FunctionDefinitionNode(int line, int column, ParamListNode paramList, BlockStatementNode statementList) : base(line, column, NodeType.FunctionDefinition)
+		{
+			ParamList = paramList;
+			StatementList = statementList;
+		}
+
+		private ParamListNode ParamList { get; set; }
+		private BlockStatementNode StatementList { get; set; }
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitFunctionDefinition(this);
 		}
-	}
-	
-	/*--------STATEMENTS----------------*/
-	public class StatementListNode(int line, int column, List<StatementNode> statementNode)
-		: AstNode(line, column, NodeType.StatementList)
-	{
-		public List<StatementNode> StatementNode { get; set; } = statementNode;
 
-		public override T Accept<T>(IAstVisitor<T> visitor)
+		public override IEnumerable<AstNode> GetChildren()
 		{
-			return visitor.VisitStatement(this);
+			return [ParamList, StatementList];
 		}
 	}
 	
-	public abstract class StatementNode(int line, int column, StatementType type)
-		: AstNode(line, column, NodeType.Statement)
+	/*--------STATEMENTS----------------*/
+	public class BlockStatementNode : AstNode
 	{
-		public new StatementType Type { get; set; } = type;
-		public new int Line { get; set; } = line;
-		public new int Column { get; set; } = column;
+		public BlockStatementNode(int line, int column, List<StatementNode> statements) : base(line, column, NodeType.StatementList)
+		{
+			Statements = statements;
+		}
 
-		public abstract override T Accept<T>(IAstVisitor<T> visitor);
+		private List<StatementNode> Statements { get; set; }
+
+		public override T Accept<T>(IAstVisitor<T> visitor)
+		{
+			return visitor.VisitBlockStatement(this);
+		}
+
+		public override IEnumerable<AstNode> GetChildren()
+		{
+			return Statements;
+		}
 	}
 	
-	public class WhileStatementNode(int line, int column) : StatementNode(line, column, StatementType.WhileStatement)
+	public abstract class StatementNode : AstNode
 	{
+		protected StatementNode(int line, int column, StatementType type) : base(line, column, NodeType.Statement)
+		{
+			Type = type;
+			Line = line;
+			Column = column;
+		}
+
+		public new StatementType Type { get; set; }
+		public new int Line { get; set; }
+		public new int Column { get; set; }
+
+		public abstract override T Accept<T>(IAstVisitor<T> visitor);
+
+		public override IEnumerable<AstNode> GetChildren()
+		{
+			return [];
+		}
+	}
+	
+	public class WhileStatementNode : StatementNode
+	{
+		public ExpressionNode Condition { get; set; }
+		public BlockStatementNode Body { get; set; }
+		public WhileStatementNode(int line, int column, ExpressionNode condition, BlockStatementNode body) 
+		: base(line, column, StatementType.WhileStatement)
+		{
+			Condition = condition;
+			Body = body;
+		}
+
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitWhileStatement(this);
 		}
+
+		public override IEnumerable<AstNode> GetChildren()
+		{
+			return [Condition, Body];
+		}
 	}
 	
-	public class ForStatementNode(int line, int column) : StatementNode(line, column, StatementType.ForStatement)
+	public class ForStatementNode : StatementNode
 	{
+		public ForStatementNode(int line, int column, 
+			ExpressionNode initialization, 
+			ExpressionNode condition, 
+			ExpressionNode increment ,
+			BlockStatementNode body) 
+		: base(line, column, StatementType.ForStatement)
+		{
+			Initialization = initialization;
+			Condition = condition;
+			Increment = increment;
+			Body = body;
+		}
+
+		private ExpressionNode Initialization { get; set; }
+		private ExpressionNode Condition { get; set; }
+		private ExpressionNode Increment { get; set; }
+		private BlockStatementNode Body { get; set; }
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitForStatement(this);
 		}
+
+		public override IEnumerable<AstNode> GetChildren()
+		{
+			return [Initialization, Condition, Increment, Body];
+		}
 	}
 	
-	public class IfStatementNode(int line, int column) : StatementNode(line, column, StatementType.IfStatement)
+	public class IfStatementNode : StatementNode
 	{
+		public IfStatementNode(int line, int column, 
+		ExpressionNode condition,
+		BlockStatementNode thenBody,
+		BlockStatementNode elseBody) 
+		: base(line, column, StatementType.IfStatement)
+		{
+			Condition = condition;
+			ThenBody = thenBody;
+			ElseBody = elseBody;
+		}
+
+		private ExpressionNode Condition { get; set; }
+		private BlockStatementNode ThenBody { get; set; }
+		private BlockStatementNode ElseBody { get; set; }
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitIfStatement(this);
 		}
+
+		public override IEnumerable<AstNode> GetChildren()
+		{
+			return [Condition, ThenBody, ElseBody];
+		}
 	}
 	
-	public class AssignmentStatementNode(int line, int column)
-		: StatementNode(line, column, StatementType.AssignmentStatement)
+	public class AssignmentStatementNode : StatementNode
 	{
+		public AssignmentStatementNode(int line, int column, ExpressionNode left, ExpressionNode right)
+		: base(line, column, StatementType.AssignmentStatement)
+		{
+			Left = left;
+			Right = right;
+		}
+		
+		private ExpressionNode Left { get; set;}
+		private ExpressionNode Right { get; set;}
+
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitAssignment(this);
 		}
+
+		public override IEnumerable<AstNode> GetChildren()
+		{
+			return [ Left, Right ];
+			
+		}
 	}
 	
 	/*--------EXPRESSIONS---------------*/
-	public class NumberLiteralNode(int line, int column, int value) : AstNode(line, column, NodeType.NumberLiteral)
+	public class NumberLiteralNode : AstNode
 	{
-		public int Value { get; set;} = value;
+		public NumberLiteralNode(int line, int column, int value) : base(line, column, NodeType.NumberLiteral)
+		{
+			Value = value;
+		}
+
+		public int Value { get; set;}
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitNumberLiteral(this);
 		}
+
+		public override IEnumerable<AstNode> GetChildren()
+		{
+			return [];
+		}
 	}
 	
-	public class StringLiteralNode(int line, int column, string value) : AstNode(line, column, NodeType.StringLiteral)
+	public class StringLiteralNode : AstNode
 	{
-		public string? Value { get; set;} = value;
+		public StringLiteralNode(int line, int column, string value) : base(line, column, NodeType.StringLiteral)
+		{
+			Value = value;
+		}
+
+		public string? Value { get; set;}
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitString(this);
 		}
-	}
-	
-	public class VariableNode(int line, int column, VariableValue value) : AstNode(line, column, NodeType.Variable)
-	{
-		public VariableValue Value { get; set; } = value;
 
-		public override T Accept<T>(IAstVisitor<T> visitor)
+		public override IEnumerable<AstNode> GetChildren()
 		{
-			return visitor.VisitVariable(this);
+			return [];
 		}
 	}
 	
-	public class VariableValue(int line, int column, object value) : AstNode(line, column, NodeType.Variable)
+	public class VariableDeclarationNode : AstNode
 	{
-		public object Value { get; set; } = value;
+		public VariableDeclarationNode(int line, int column, string name, ExpressionNode initializer) 
+		: base(line, column, NodeType.VariableDeclaration)
+		{
+			Name = name;
+			Initializer = initializer;
+		}
+
+		public string Name { get; set; }
+		private ExpressionNode Initializer { get; set; }
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
-        {
-            return visitor.VisitVariableValue(this);
-        }
-    }
+		{
+			return visitor.VisitVariableDeclaration(this);
+		}
+
+		public override IEnumerable<AstNode> GetChildren()
+		{
+			return [Initializer];
+		}
+	}
 	
 	//FUNCTION CALL
-	public class FunctionCallNode(int line, int column, string identifier, List<ArgumentNode> arguments)
-		: AstNode(line, column, NodeType.FunctionCall)
+	public class FunctionCallNode : AstNode
 	{
-		public string Identifier { get; set; } = identifier;
-		public List<ArgumentNode> Arguments { get; set;} = arguments;
+		public FunctionCallNode(int line, int column, string identifier, List<ArgumentNode> arguments) : base(line, column, NodeType.FunctionCall)
+		{
+			Identifier = identifier;
+			Arguments = arguments;
+		}
+
+		public string Identifier { get; set; }
+		public List<ArgumentNode> Arguments { get; set;}
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
@@ -236,10 +433,14 @@ namespace Gwent__.Parser
 		}
 	}
 	
-	public class ArgumentNode(int line, int column, ExpressionNode expression)
-		: AstNode(line, column, NodeType.Argument)
+	public class ArgumentNode : AstNode
 	{
-		public ExpressionNode Expression { get; set;} = expression;
+		public ArgumentNode(int line, int column, ExpressionNode expression) : base(line, column, NodeType.Argument)
+		{
+			Expression = expression;
+		}
+
+		public ExpressionNode Expression { get; set;}
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
@@ -249,36 +450,72 @@ namespace Gwent__.Parser
 	
 	public abstract class ExpressionNode : AstNode
 	{
-		protected ExpressionNode(int line, int column, NodeType nodeType)
-		: base(line, column, nodeType)
+		protected ExpressionNode(int line, int column)
+		: base(line, column, NodeType.Expression)
 		{	
 		}
 
 		public abstract override T Accept<T>(IAstVisitor<T> visitor);
+
+		public override IEnumerable<AstNode> GetChildren()
+		{
+			return [];
+		}
 	}
 	
-	public class BinaryExpressionNode(int line, int column, ExpressionNode left, string @operator, ExpressionNode right)
-		: AstNode(line, column, NodeType.BinaryExpression)
+	public class BinaryExpressionNode : AstNode
 	{
-		public ExpressionNode Left { get; set;} = left;
-		public string Operator { get; set; } = @operator;
-		public ExpressionNode Right { get; set;} = right;
+		public BinaryExpressionNode(int line, int column, ExpressionNode left, string @operator, ExpressionNode right) : base(line, column, NodeType.BinaryExpression)
+		{
+			Left = left;
+			Operator = @operator;
+			Right = right;
+		}
+
+		private ExpressionNode Left { get; set;}
+		public string Operator { get; set; }
+		private ExpressionNode Right { get; set;}
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitBinaryExpression(this);	
 		}
+		
+		public ExpressionNode GetLeft()
+		{
+			return Left;
+		}
+		
+		public ExpressionNode GetRight()
+		{
+			return Right;
+		}
+
+		public override IEnumerable<AstNode> GetChildren()
+		{
+			return [Left, Right];
+		}
 	}
 	
-	public class UnaryExpressionNode(int line, int column, ExpressionNode operand, string @operator)
-		: AstNode(line, column, NodeType.UnaryExpression)
+	public class UnaryExpressionNode : AstNode
 	{
-		public ExpressionNode Operand { get; set;} = operand;
-		public string Operator { get; set; } = @operator;
+		public UnaryExpressionNode(int line, int column, ExpressionNode operand, string @operator) : base(line, column, NodeType.UnaryExpression)
+		{
+			Operand = operand;
+			Operator = @operator;
+		}
+
+		private ExpressionNode Operand { get; set;}
+		public string Operator { get; set; }
 
 		public override T Accept<T>(IAstVisitor<T> visitor)
 		{
 			return visitor.VisitUnaryExpression(this);
+		}
+
+		public override IEnumerable<AstNode> GetChildren()
+		{
+			return [Operand];
 		}
 	}
 }
