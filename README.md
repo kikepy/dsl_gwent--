@@ -1,0 +1,1 @@
+This is my second project from school is an interpreter about and dsl lenguage based in make effects and cards for a card game style gwent from the witcher game, using c# as lenguage for make the code and unity as graphic motor for the visual
